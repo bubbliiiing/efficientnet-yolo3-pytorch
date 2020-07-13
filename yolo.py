@@ -16,6 +16,10 @@ from utils.utils import non_max_suppression, bbox_iou, DecodeBox,letterbox_image
 
 class YOLO(object):
     _defaults = {
+        #--------------------------------------------#
+        #   使用自己训练好的模型预测需要修改3个参数
+        #   phi、model_path和classes_path都需要修改！
+        #--------------------------------------------#
         "model_path"        : 'model_data/efficientnet-b2-voc.pth',
         "classes_path"      : 'model_data/voc_classes.txt',
         "model_image_size"  : (416, 416, 3),
