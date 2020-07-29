@@ -27,17 +27,19 @@ img/street.jpg
 b、利用video.py可进行摄像头检测。  
 #### 2、使用自己训练的权重
 a、按照训练步骤训练。  
-b、在yolo.py文件里面，在如下部分修改model_path和classes_path使其对应训练好的文件；**model_path对应logs文件夹下面的权值文件，classes_path是model_path对应分的类**。  
+b、在yolo.py文件里面，在如下部分修改model_path、classes_path和phi使其对应训练好的文件；**model_path对应logs文件夹下面的权值文件，classes_path是model_path对应分的类**，phi指的是所用的efficientnet的版本。  
 ```python
 _defaults = {
-    "model_path": 'model_data/yolo_weights.pth',
-    "anchors_path": 'model_data/yolo_anchors.txt',
-    "classes_path": 'model_data/coco_classes.txt,
-    "score" : 0.5,
-    "iou" : 0.3,
-    # 显存比较小可以使用416x416
-    # 显存比较大可以使用608x608
-    "model_image_size" : (416, 416)
+    #--------------------------------------------#
+    #   使用自己训练好的模型预测需要修改3个参数
+    #   phi、model_path和classes_path都需要修改！
+    #--------------------------------------------#
+    "model_path"        : 'model_data/efficientnet-b2-voc.pth',
+    "classes_path"      : 'model_data/voc_classes.txt',
+    "model_image_size"  : (416, 416, 3),
+    "confidence"        : 0.3,
+    "phi"               : 2,
+    "cuda"              : True
 }
 
 ```
