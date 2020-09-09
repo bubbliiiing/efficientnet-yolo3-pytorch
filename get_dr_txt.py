@@ -10,6 +10,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
+from tqdm import tqdm
 from torch.autograd import Variable
 from yolo import YOLO
 from nets.yolo3 import YoloBody
@@ -22,7 +23,7 @@ class mAP_Yolo(YOLO):
     #   检测图片
     #---------------------------------------------------#
     def detect_image(self,image_id,image):
-        self.confidence = 0.05
+        self.confidence = 0.001
         f = open("./input/detection-results/"+image_id+".txt","w") 
         image_shape = np.array(np.shape(image)[0:2])
 
@@ -82,7 +83,7 @@ if not os.path.exists("./input/images-optional"):
     os.makedirs("./input/images-optional")
 
 
-for image_id in image_ids:
+for image_id in tqdm(image_ids):
     image_path = "./VOCdevkit/VOC2007/JPEGImages/"+image_id+".jpg"
     image = Image.open(image_path)
     # 开启后在之后计算mAP可以可视化
