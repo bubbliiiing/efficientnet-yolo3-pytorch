@@ -2,11 +2,18 @@
 ---
 
 ### 目录
-1. [所需环境 Environment](#所需环境)
-2. [文件下载 Download](#文件下载)
-3. [预测步骤 How2predict](#预测步骤)
-4. [训练步骤 How2train](#训练步骤)
-5. [参考资料 Reference](#Reference)
+1. [性能情况 Performance](#性能情况)
+2. [所需环境 Environment](#所需环境)
+3. [文件下载 Download](#文件下载)
+4. [预测步骤 How2predict](#预测步骤)
+5. [训练步骤 How2train](#训练步骤)
+6. [参考资料 Reference](#Reference)
+
+### 性能情况
+| 训练数据集 | 权值文件名称 | 测试数据集 | 输入图片大小 | mAP 0.5:0.95 | mAP 0.5 |
+| :-----: | :-----: | :------: | :------: | :------: | :-----: |
+| VOC07+12 | [efficientnet-b2-voc.pth](https://github.com/bubbliiiing/efficientnet-yolo3-pytorch/releases/download/v1.0/efficientnet-b2-voc.pth) | VOC-Test07 | 416x416 | - | 76.11 
+
 
 ### 所需环境
 torch == 1.2.0
