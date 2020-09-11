@@ -24,6 +24,7 @@ class YOLO(object):
         "classes_path"      : 'model_data/voc_classes.txt',
         "model_image_size"  : (416, 416, 3),
         "confidence"        : 0.3,
+        "iou"               : 0.3,
         "phi"               : 2,
         "cuda"              : True
     }
@@ -112,7 +113,7 @@ class YOLO(object):
             output = torch.cat(output_list, 1)
             batch_detections = non_max_suppression(output, self.config["yolo"]["classes"],
                                                     conf_thres=self.confidence,
-                                                    nms_thres=0.3)
+                                                    nms_thres=self.iou)
         try :
             batch_detections = batch_detections[0].cpu().numpy()
         except:
