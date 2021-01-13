@@ -1,7 +1,10 @@
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
-from collections import OrderedDict
+
 from nets.efficientnet import EfficientNet as EffNet
+
 
 class EfficientNet(nn.Module):
     def __init__(self, phi, load_weights=False):
@@ -60,7 +63,13 @@ class YoloBody(nn.Module):
     def __init__(self, config, phi=0, load_weights=False):
         super(YoloBody, self).__init__()
         self.config = config
-        #  backbone
+        #---------------------------------------------------#   
+        #   生成efficientnet的主干模型，以efficientnetB0为例
+        #   获得三个有效特征层，他们的shape分别是：
+        #   13,13,40
+        #   26,26,112
+        #   13,13,320
+        #---------------------------------------------------#
         self.backbone = EfficientNet(phi,load_weights=load_weights)
 
         out_filters = {
@@ -74,17 +83,18 @@ class YoloBody(nn.Module):
             7: [80, 224, 640],
         }[phi]
 
-        #  last_layer0
+        #------------------------------------------------------------------------#
+        #   计算yolo_head的输出通道数，对于voc数据集而言
+        #   final_out_filter0 = final_out_filter1 = final_out_filter2 = 75
+        #------------------------------------------------------------------------#
         final_out_filter0 = len(config["yolo"]["anchors"][0]) * (5 + config["yolo"]["classes"])
         self.last_layer0 = make_last_layers([out_filters[2], int(out_filters[2]*2)], out_filters[2], final_out_filter0)
 
-        #  embedding1
         final_out_filter1 = len(config["yolo"]["anchors"][1]) * (5 + config["yolo"]["classes"])
         self.last_layer1_conv = conv2d(out_filters[2], out_filters[1], 1)
         self.last_layer1_upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.last_layer1 = make_last_layers([out_filters[1], int(out_filters[1]*2)], out_filters[1] + out_filters[1], final_out_filter1)
 
-        #  embedding2
         final_out_filter2 = len(config["yolo"]["anchors"][2]) * (5 + config["yolo"]["classes"])
         self.last_layer2_conv = conv2d(out_filters[1], out_filters[0], 1)
         self.last_layer2_upsample = nn.Upsample(scale_factor=2, mode='nearest')
@@ -98,18 +108,31 @@ class YoloBody(nn.Module):
                 if i == 4:
                     out_branch = layer_in
             return layer_in, out_branch
-        #  backbone
+        #---------------------------------------------------#   
+        #   获得三个有效特征层，他们的shape分别是：
+        #   13,13,40；26,26,112；13,13,320
+        #---------------------------------------------------#
         x2, x1, x0 = self.backbone(x)
-        #  yolo branch 0
+
+        #---------------------------------------------------#
+        #   第一个特征层
+        #   out0 = (batch_size,255,13,13)
+        #---------------------------------------------------#
         out0, out0_branch = _branch(self.last_layer0, x0)
 
-        #  yolo branch 1
+        #---------------------------------------------------#
+        #   第二个特征层
+        #   out1 = (batch_size,255,26,26)
+        #---------------------------------------------------#
         x1_in = self.last_layer1_conv(out0_branch)
         x1_in = self.last_layer1_upsample(x1_in)
         x1_in = torch.cat([x1_in, x1], 1)
         out1, out1_branch = _branch(self.last_layer1, x1_in)
 
-        #  yolo branch 2
+        #---------------------------------------------------#
+        #   第一个特征层
+        #   out3 = (batch_size,255,52,52)
+        #---------------------------------------------------#
         x2_in = self.last_layer2_conv(out1_branch)
         x2_in = self.last_layer2_upsample(x2_in)
         x2_in = torch.cat([x2_in, x2], 1)
