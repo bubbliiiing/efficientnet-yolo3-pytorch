@@ -1,6 +1,9 @@
 ## YOLOV3：You Only Look Once目标检测模型在Pytorch当中的实现-替换efficientnet主干网络
 ---
 
+**2021年2月8日更新：**   
+**加入letterbox_image的选项，关闭letterbox_image后网络的map得到大幅度提升。**
+
 ## 目录
 1. [性能情况 Performance](#性能情况)
 2. [所需环境 Environment](#所需环境)
@@ -12,7 +15,7 @@
 ## 性能情况
 | 训练数据集 | 权值文件名称 | 测试数据集 | 输入图片大小 | mAP 0.5:0.95 | mAP 0.5 |
 | :-----: | :-----: | :------: | :------: | :------: | :-----: |
-| VOC07+12 | [efficientnet-b2-voc.pth](https://github.com/bubbliiiing/efficientnet-yolo3-pytorch/releases/download/v1.0/efficientnet-b2-voc.pth) | VOC-Test07 | 416x416 | - | 77.9
+| VOC07+12 | [efficientnet-b2-voc.pth](https://github.com/bubbliiiing/efficientnet-yolo3-pytorch/releases/download/v1.0/efficientnet-b2-voc.pth) | VOC-Test07 | 416x416 | - | 78.9
 
 
 ## 所需环境
