@@ -1,16 +1,6 @@
-import math
-from random import shuffle
-
 import cv2
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from matplotlib.colors import hsv_to_rgb, rgb_to_hsv
-from nets.yolo_training import Generator
 from PIL import Image
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 
 
@@ -153,7 +143,6 @@ class YoloDataset(Dataset):
         tmp_inp = np.transpose(img / 255.0, (2, 0, 1))
         tmp_targets = np.array(y, dtype=np.float32)
         return tmp_inp, tmp_targets
-
 
 # DataLoader中collate_fn使用
 def yolo_dataset_collate(batch):

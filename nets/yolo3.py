@@ -46,6 +46,10 @@ def conv2d(filter_in, filter_out, kernel_size):
         ("relu", nn.LeakyReLU(0.1)),
     ]))
 
+#------------------------------------------------------------------------#
+#   make_last_layers里面一共有七个卷积，前五个用于提取特征。
+#   后两个用于获得yolo网络的预测结果
+#------------------------------------------------------------------------#
 def make_last_layers(filters_list, in_filters, out_filter):
     m = nn.ModuleList([
         conv2d(in_filters, filters_list[0], 1),
@@ -60,9 +64,8 @@ def make_last_layers(filters_list, in_filters, out_filter):
     return m
 
 class YoloBody(nn.Module):
-    def __init__(self, config, phi=0, load_weights=False):
+    def __init__(self, anchor, num_classes, phi=0, load_weights=False):
         super(YoloBody, self).__init__()
-        self.config = config
         #---------------------------------------------------#   
         #   生成efficientnet的主干模型，以efficientnetB0为例
         #   获得三个有效特征层，他们的shape分别是：
@@ -87,15 +90,15 @@ class YoloBody(nn.Module):
         #   计算yolo_head的输出通道数，对于voc数据集而言
         #   final_out_filter0 = final_out_filter1 = final_out_filter2 = 75
         #------------------------------------------------------------------------#
-        final_out_filter0 = len(config["yolo"]["anchors"][0]) * (5 + config["yolo"]["classes"])
+        final_out_filter0 = len(anchor[0]) * (5 + num_classes)
         self.last_layer0 = make_last_layers([out_filters[2], int(out_filters[2]*2)], out_filters[2], final_out_filter0)
 
-        final_out_filter1 = len(config["yolo"]["anchors"][1]) * (5 + config["yolo"]["classes"])
+        final_out_filter1 = len(anchor[1]) * (5 + num_classes)
         self.last_layer1_conv = conv2d(out_filters[2], out_filters[1], 1)
         self.last_layer1_upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.last_layer1 = make_last_layers([out_filters[1], int(out_filters[1]*2)], out_filters[1] + out_filters[1], final_out_filter1)
 
-        final_out_filter2 = len(config["yolo"]["anchors"][2]) * (5 + config["yolo"]["classes"])
+        final_out_filter2 = len(anchor[2]) * (5 + num_classes)
         self.last_layer2_conv = conv2d(out_filters[1], out_filters[0], 1)
         self.last_layer2_upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.last_layer2 = make_last_layers([out_filters[0], int(out_filters[0]*2)], out_filters[0] + out_filters[0], final_out_filter2)

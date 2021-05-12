@@ -4,18 +4,14 @@
 import colorsys
 import os
 
-import cv2
 import numpy as np
 import torch
-import torch.backends.cudnn as cudnn
 import torch.nn as nn
 from PIL import Image, ImageDraw, ImageFont
-from torch.autograd import Variable
 
 from nets.yolo3 import YoloBody
-from utils.config import Config
-from utils.utils import (DecodeBox, bbox_iou, letterbox_image,
-                         non_max_suppression, yolo_correct_boxes)
+from utils.utils import (DecodeBox, letterbox_image, non_max_suppression,
+                         yolo_correct_boxes)
 
 
 class YOLO(object):
@@ -27,6 +23,7 @@ class YOLO(object):
         #   训练时的model_path和classes_path参数的修改
         #--------------------------------------------#      
         "model_path"        : 'model_data/efficientnet-b2-voc.pth',
+        "anchors_path"      : 'model_data/yolo_anchors.txt',
         "classes_path"      : 'model_data/voc_classes.txt',
         "model_image_size"  : (416, 416, 3),
         "confidence"        : 0.3,
@@ -53,7 +50,7 @@ class YOLO(object):
     def __init__(self, **kwargs):
         self.__dict__.update(self._defaults)
         self.class_names = self._get_class()
-        self.config = Config
+        self.anchors = self._get_anchors()
         self.generate()
 
     #---------------------------------------------------#
@@ -67,14 +64,24 @@ class YOLO(object):
         return class_names
 
     #---------------------------------------------------#
+    #   获得所有的先验框
+    #---------------------------------------------------#
+    def _get_anchors(self):
+        anchors_path = os.path.expanduser(self.anchors_path)
+        with open(anchors_path) as f:
+            anchors = f.readline()
+        anchors = [float(x) for x in anchors.split(',')]
+        return np.array(anchors).reshape([-1, 3, 2])[::-1,:,:]
+
+    #---------------------------------------------------#
     #   生成模型
     #---------------------------------------------------#
     def generate(self):
-        self.config["yolo"]["classes"] = len(self.class_names)
+        self.num_classes = len(self.class_names)
         #---------------------------------------------------#
         #   建立yolov3模型
         #---------------------------------------------------#
-        self.net = YoloBody(self.config,phi=self.phi)
+        self.net = YoloBody(self.anchors, self.num_classes, phi=self.phi)
 
         #---------------------------------------------------#
         #   载入yolov3模型的权重
@@ -86,7 +93,6 @@ class YOLO(object):
         self.net = self.net.eval()
 
         if self.cuda:
-            os.environ["CUDA_VISIBLE_DEVICES"] = '0'
             self.net = nn.DataParallel(self.net)
             self.net = self.net.cuda()
 
@@ -95,7 +101,7 @@ class YOLO(object):
         #---------------------------------------------------#
         self.yolo_decodes = []
         for i in range(3):
-            self.yolo_decodes.append(DecodeBox(self.config["yolo"]["anchors"][i], self.config["yolo"]["classes"],  (self.model_image_size[1], self.model_image_size[0])))
+            self.yolo_decodes.append(DecodeBox(self.anchors[i], self.num_classes, (self.model_image_size[1], self.model_image_size[0])))
 
         print('{} model, anchors, and classes loaded.'.format(self.model_path))
         # 画框设置不同的颜色
@@ -110,17 +116,21 @@ class YOLO(object):
     #   检测图片
     #---------------------------------------------------#
     def detect_image(self, image):
-        image_shape = np.array(np.shape(image)[0:2])
+        #---------------------------------------------------------#
+        #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
+        #---------------------------------------------------------#
+        image = image.convert('RGB')
 
+        image_shape = np.array(np.shape(image)[0:2])
         #---------------------------------------------------------#
         #   给图像增加灰条，实现不失真的resize
         #   也可以直接resize进行识别
         #---------------------------------------------------------#
         if self.letterbox_image:
-            crop_img = np.array(letterbox_image(image, (self.model_image_size[1],self.model_image_size[0])))
+            crop_img = np.array(letterbox_image(image, (self.model_image_size[1], self.model_image_size[0])))
         else:
-            crop_img = image.convert('RGB')
-            crop_img = crop_img.resize((self.model_image_size[1],self.model_image_size[0]), Image.BICUBIC)
+            crop_img = image.resize((self.model_image_size[1], self.model_image_size[0]), Image.BICUBIC)
+
         photo = np.array(crop_img,dtype = np.float32) / 255.0
         photo = np.transpose(photo, (2, 0, 1))
         #---------------------------------------------------------#
@@ -145,9 +155,7 @@ class YOLO(object):
             #   将预测框进行堆叠，然后进行非极大抑制
             #---------------------------------------------------------#
             output = torch.cat(output_list, 1)
-            batch_detections = non_max_suppression(output, self.config["yolo"]["classes"],
-                                                    conf_thres=self.confidence,
-                                                    nms_thres=self.iou)
+            batch_detections = non_max_suppression(output, self.num_classes, conf_thres=self.confidence, nms_thres=self.iou)
                                                     
             #---------------------------------------------------------#
             #   如果没有检测出物体，返回原图
@@ -160,10 +168,10 @@ class YOLO(object):
             #---------------------------------------------------------#
             #   对预测框进行得分筛选
             #---------------------------------------------------------#
-            top_index = batch_detections[:,4] * batch_detections[:,5] > self.confidence
-            top_conf = batch_detections[top_index,4]*batch_detections[top_index,5]
-            top_label = np.array(batch_detections[top_index,-1],np.int32)
-            top_bboxes = np.array(batch_detections[top_index,:4])
+            top_index   = batch_detections[:, 4] * batch_detections[:, 5] > self.confidence
+            top_conf    = batch_detections[top_index, 4] * batch_detections[top_index, 5]
+            top_label   = np.array(batch_detections[top_index, -1],np.int32)
+            top_bboxes  = np.array(batch_detections[top_index, :4])
             top_xmin, top_ymin, top_xmax, top_ymax = np.expand_dims(top_bboxes[:,0],-1),np.expand_dims(top_bboxes[:,1],-1),np.expand_dims(top_bboxes[:,2],-1),np.expand_dims(top_bboxes[:,3],-1)
 
             #-----------------------------------------------------------------#
@@ -172,7 +180,7 @@ class YOLO(object):
             #   我们需要对其进行修改，去除灰条的部分。
             #-----------------------------------------------------------------#
             if self.letterbox_image:
-                boxes = yolo_correct_boxes(top_ymin,top_xmin,top_ymax,top_xmax,np.array([self.model_image_size[0],self.model_image_size[1]]),image_shape)
+                boxes = yolo_correct_boxes(top_ymin, top_xmin, top_ymax, top_xmax, np.array([self.model_image_size[0],self.model_image_size[1]]), image_shape)
             else:
                 top_xmin = top_xmin / self.model_image_size[1] * image_shape[1]
                 top_ymin = top_ymin / self.model_image_size[0] * image_shape[0]
