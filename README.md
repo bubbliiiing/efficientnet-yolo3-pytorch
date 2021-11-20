@@ -1,4 +1,4 @@
-## YOLOV3：You Only Look Once目标检测模型在Pytorch当中的实现-替换efficientnet主干网络
+## YOLOV3：You Only Look Once目标检测模型-修改efficientnet系列主干网络-在pytorch当中的实现
 ---
 
 **2021年10月12日更新：**   
@@ -16,20 +16,21 @@
 ## 性能情况
 | 训练数据集 | 权值文件名称 | 测试数据集 | 输入图片大小 | mAP 0.5:0.95 | mAP 0.5 |
 | :-----: | :-----: | :------: | :------: | :------: | :-----: |
-| VOC07+12 | [efficientnet-b2-voc.pth](https://github.com/bubbliiiing/efficientnet-yolo3-pytorch/releases/download/v1.0/efficientnet-b2-voc.pth) | VOC-Test07 | 416x416 | - | 78.9
+| VOC07+12 | [yolov3_efficientnet_b0_voc.pth](https://github.com/bubbliiiing/efficientnet-yolo3-pytorch/releases/download/v1.0/yolov3_efficientnet_b0_voc.pth) | VOC-Test07 | 416x416 | - | 81.63
+| VOC07+12 | [yolov3_efficientnet_b1_voc.pth](https://github.com/bubbliiiing/efficientnet-yolo3-pytorch/releases/download/v1.0/yolov3_efficientnet_b1_voc.pth) | VOC-Test07 | 416x416 | - | 82.70
+| VOC07+12 | [yolov3_efficientnet_b2_voc.pth](https://github.com/bubbliiiing/efficientnet-yolo3-pytorch/releases/download/v1.0/yolov3_efficientnet_b2_voc.pth) | VOC-Test07 | 416x416 | - | 82.95
 
 ## 所需环境
 torch == 1.2.0
 
 ## 文件下载
-训练所需的efficientnet-b2-yolov3的权重可以在百度云下载。  
-链接: https://pan.baidu.com/s/1UjhZUjawmZ-7_OSWPGnwmw    
-提取码: hiuq   
-其它版本的efficientnet的权重可以将pretrained参数设置成True，从而获得。
+训练所需的各类权重可以在百度云下载。  
+链接: https://pan.baidu.com/s/1BQ9rIyxWiMIlUgwyb8ltVw     
+提取码: dp7r 
 
 VOC数据集下载地址如下，里面已经包括了训练集、测试集、验证集（与测试集一样），无需再次划分：  
-链接: https://pan.baidu.com/s/1YuBbBKxm2FGgTU5OfaeC5A    
-提取码: uack   
+链接: https://pan.baidu.com/s/19Mw2u_df_nBzsC2lg20fQA    
+提取码: j5ge   
 
 ## 训练步骤
 ### a、训练VOC07+12数据集
