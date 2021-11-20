@@ -320,7 +320,7 @@ def load_pretrained_weights(model, model_name, load_fc=True, advprop=False):
     """ Loads pretrained weights, and downloads if loading for the first time. """
     # AutoAugment or Advprop (different preprocessing)
     url_map_ = url_map_advprop if advprop else url_map
-    state_dict = model_zoo.load_url(url_map_[model_name])
+    state_dict = model_zoo.load_url(url_map_[model_name], model_dir="model_data")
     if load_fc:
         model.load_state_dict(state_dict, strict=True)
         
