@@ -67,11 +67,11 @@ class YoloBody(nn.Module):
     def __init__(self, anchors_mask, num_classes, phi=0, load_weights = False):
         super(YoloBody, self).__init__()
         #---------------------------------------------------#   
-        #   生成darknet53的主干模型
+        #   生成efficientnet的主干模型，以efficientnetB0为例
         #   获得三个有效特征层，他们的shape分别是：
-        #   52,52,256
-        #   26,26,512
-        #   13,13,1024
+        #   52, 52, 40
+        #   26, 26, 112
+        #   13, 13, 320
         #---------------------------------------------------#
         self.backbone = EfficientNet(phi, load_weights = load_weights)
 
@@ -86,10 +86,6 @@ class YoloBody(nn.Module):
             7: [80, 224, 640],
         }[phi]
 
-        #------------------------------------------------------------------------#
-        #   计算yolo_head的输出通道数，对于voc数据集而言
-        #   final_out_filter0 = final_out_filter1 = final_out_filter2 = 75
-        #------------------------------------------------------------------------#
         self.last_layer0            = make_last_layers([out_filters[-1], int(out_filters[-1]*2)], out_filters[-1], len(anchors_mask[0]) * (num_classes + 5))
 
         self.last_layer1_conv       = conv2d(out_filters[-1], out_filters[-2], 1)
@@ -103,7 +99,9 @@ class YoloBody(nn.Module):
     def forward(self, x):
         #---------------------------------------------------#   
         #   获得三个有效特征层，他们的shape分别是：
-        #   52,52,256；26,26,512；13,13,1024
+        #   52, 52, 40
+        #   26, 26, 112
+        #   13, 13, 320
         #---------------------------------------------------#
         x2, x1, x0 = self.backbone(x)
 
@@ -111,35 +109,28 @@ class YoloBody(nn.Module):
         #   第一个特征层
         #   out0 = (batch_size,255,13,13)
         #---------------------------------------------------#
-        # 13,13,1024 -> 13,13,512 -> 13,13,1024 -> 13,13,512 -> 13,13,1024 -> 13,13,512
         out0_branch = self.last_layer0[:5](x0)
         out0        = self.last_layer0[5:](out0_branch)
 
-        # 13,13,512 -> 13,13,256 -> 26,26,256
         x1_in = self.last_layer1_conv(out0_branch)
         x1_in = self.last_layer1_upsample(x1_in)
 
-        # 26,26,256 + 26,26,512 -> 26,26,768
         x1_in = torch.cat([x1_in, x1], 1)
         #---------------------------------------------------#
         #   第二个特征层
         #   out1 = (batch_size,255,26,26)
         #---------------------------------------------------#
-        # 26,26,768 -> 26,26,256 -> 26,26,512 -> 26,26,256 -> 26,26,512 -> 26,26,256
         out1_branch = self.last_layer1[:5](x1_in)
         out1        = self.last_layer1[5:](out1_branch)
 
-        # 26,26,256 -> 26,26,128 -> 52,52,128
         x2_in = self.last_layer2_conv(out1_branch)
         x2_in = self.last_layer2_upsample(x2_in)
 
-        # 52,52,128 + 52,52,256 -> 52,52,384
         x2_in = torch.cat([x2_in, x2], 1)
         #---------------------------------------------------#
         #   第一个特征层
         #   out3 = (batch_size,255,52,52)
         #---------------------------------------------------#
-        # 52,52,384 -> 52,52,128 -> 52,52,256 -> 52,52,128 -> 52,52,256 -> 52,52,128
         out2 = self.last_layer2(x2_in)
         return out0, out1, out2
 
