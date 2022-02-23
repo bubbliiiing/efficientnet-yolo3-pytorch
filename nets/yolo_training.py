@@ -414,7 +414,7 @@ class YOLOLoss(nn.Module):
                 noobj_mask[b][anch_ious_max > self.ignore_threshold] = 0
         return noobj_mask, pred_boxes
 
-def weights_init(net, init_type='normal', init_gain = 0.1):
+def weights_init(net, init_type='normal', init_gain = 0.02):
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and classname.find('Conv') != -1:
