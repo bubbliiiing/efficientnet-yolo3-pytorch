@@ -63,12 +63,7 @@ if __name__ == "__main__":
     #   heatmap_save_path仅在mode='heatmap'有效
     #-------------------------------------------------------------------------#
     heatmap_save_path = "model_data/heatmap_vision.png"
-    #-------------------------------------------------------------------------#
-    #   simplify            使用Simplify onnx
-    #   onnx_save_path      指定了onnx的保存路径
-    #-------------------------------------------------------------------------#
-    simplify        = True
-    onnx_save_path  = "model_data/models.onnx"
+    
 
     if mode == "predict":
         '''
