@@ -381,13 +381,15 @@ if __name__ == "__main__":
             train_sampler   = torch.utils.data.distributed.DistributedSampler(train_dataset, shuffle=True,)
             val_sampler     = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False,)
             batch_size      = batch_size // ngpus_per_node
+            shuffle         = False
         else:
             train_sampler   = None
             val_sampler     = None
-            
-        gen             = DataLoader(train_dataset, shuffle = True, batch_size = batch_size, num_workers = num_workers, pin_memory=True,
+            shuffle         = True
+
+        gen             = DataLoader(train_dataset, shuffle = shuffle, batch_size = batch_size, num_workers = num_workers, pin_memory=True,
                                     drop_last=True, collate_fn=yolo_dataset_collate, sampler=train_sampler)
-        gen_val         = DataLoader(val_dataset  , shuffle = True, batch_size = batch_size, num_workers = num_workers, pin_memory=True, 
+        gen_val         = DataLoader(val_dataset  , shuffle = shuffle, batch_size = batch_size, num_workers = num_workers, pin_memory=True, 
                                     drop_last=True, collate_fn=yolo_dataset_collate, sampler=val_sampler)
 
         #---------------------------------------#
@@ -425,10 +427,10 @@ if __name__ == "__main__":
 
                 if distributed:
                     batch_size = batch_size // ngpus_per_node
-
-                gen             = DataLoader(train_dataset, shuffle = True, batch_size = batch_size, num_workers = num_workers, pin_memory=True,
+                    
+                gen             = DataLoader(train_dataset, shuffle = shuffle, batch_size = batch_size, num_workers = num_workers, pin_memory=True,
                                             drop_last=True, collate_fn=yolo_dataset_collate, sampler=train_sampler)
-                gen_val         = DataLoader(val_dataset  , shuffle = True, batch_size = batch_size, num_workers = num_workers, pin_memory=True, 
+                gen_val         = DataLoader(val_dataset  , shuffle = shuffle, batch_size = batch_size, num_workers = num_workers, pin_memory=True, 
                                             drop_last=True, collate_fn=yolo_dataset_collate, sampler=val_sampler)
 
                 UnFreeze_flag = True
