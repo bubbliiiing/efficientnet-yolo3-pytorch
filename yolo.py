@@ -9,9 +9,8 @@ from PIL import ImageDraw, ImageFont
 
 from nets.yolo import YoloBody
 from utils.utils import (cvtColor, get_anchors, get_classes, preprocess_input,
-                         resize_image)
+                         resize_image, show_config)
 from utils.utils_bbox import DecodeBox
-
 
 '''
 训练自己的数据集必看注释！
@@ -78,6 +77,7 @@ class YOLO(object):
     #---------------------------------------------------#
     def __init__(self, **kwargs):
         self.__dict__.update(self._defaults)
+        show_config(**self._defaults)
         for name, value in kwargs.items():
             setattr(self, name, value)
             
